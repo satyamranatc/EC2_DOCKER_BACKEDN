@@ -10,7 +10,7 @@ const PORT = 5500;
 
 
 app.get("/", (req, res) => {
-    res.send("🚀 Hey Guys Deployment Successful");
+    res.send("🚀 Hey Deployment Successful");
 });
 
 app.get("/health", (req, res) => {
