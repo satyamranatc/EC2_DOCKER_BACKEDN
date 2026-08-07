@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Deploy Backend
 
 on:
   push:
@@ -6,13 +6,16 @@ on:
       - main
 
 jobs:
+
   docker:
     runs-on: ubuntu-latest
 
     steps:
+
       # Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v4
+
 
       # Login to Docker Hub
       - name: Login to Docker Hub
@@ -21,12 +24,34 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+
       # Build Docker Image
       - name: Build Docker Image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/backend:latest .
 
+
       # Push Docker Image
       - name: Push Docker Image
         run: |
           docker push ${{ secrets.DOCKER_USERNAME }}/backend:latest
+
+
+      # Deploy to EC2
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull ${{ secrets.DOCKER_USERNAME }}/backend:latest
+
+            docker stop backend || true
+
+            docker rm backend || true
+
+            docker run -d \
+              --name backend \
+              -p 5500:5500 \
+              ${{ secrets.DOCKER_USERNAME }}/backend:latest
